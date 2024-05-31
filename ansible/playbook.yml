@@ -1,0 +1,9 @@
+---
+- name: Deploy html
+  hosts: localhost
+  connection: local
+  roles:
+   - nginx
+  vars:
+    ansible_become: true
+    ansible_become_user: root

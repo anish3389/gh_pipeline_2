@@ -1,0 +1,96 @@
+name: Provision EC2 server
+
+on:
+  push:
+    branches: [ INTERN-658-pipeline ]
+  pull_request:
+    branches: [ main ]
+
+
+env:
+  terraformVersion: 1.8.2
+  awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  awsSessionToken: ${{ secrets.AWS_SESSION_TOKEN }}
+  awsRegion: us-east-1
+  backendS3Bucket: 8586-terraform-state
+  backendS3Region: us-east-1
+  backendS3AccountId: ${{ secrets.ACCOUNT_ID }}
+  backendS3StateFile: anish_lab_pipeline2.tfstate
+
+  tfPrerequisiteResource: module.s3_bucket
+
+jobs:
+  create_s3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.terraformVersion }}
+          terraform_wrapper: false
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ env.awsAccessKeyId }}
+          aws-secret-access-key: ${{ env.awsSecretAccessKey }}
+          aws-session-token: ${{ env.awsSessionToken }}
+          aws-region: ${{ env.awsRegion }}
+
+      - name: Terraform Initialize
+        id: init
+        run: cd terraform && terraform init -backend-config="bucket=${{ env.backendS3Bucket }}" -backend-config="key=${{ env.backendS3AccountId }}/${{ env.backendS3StateFile }}" -backend-config="region=${{ env.backendS3Region }}"
+
+      - name: Terraform Apply
+        id: apply
+        run: |
+          cd terraform && terraform apply -var-file=dev.tfvars -auto-approve -no-color -target=${{ env.tfPrerequisiteResource }}
+
+  upload_code_to_bucket:
+    needs: [ create_s3 ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ env.awsAccessKeyId }}
+          aws-secret-access-key: ${{ env.awsSecretAccessKey }}
+          aws-session-token: ${{ env.awsSessionToken }}
+          aws-region: ${{ env.awsRegion }}
+
+      - name: Copy files to S3
+        run: "tar cvfz - code/ ansible/ | aws s3 cp - s3://pipeline-anish-bucket2/files.tar.gz"
+
+  create_other_resources:
+    needs: [upload_code_to_bucket]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.terraformVersion }}
+          terraform_wrapper: false
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ env.awsAccessKeyId }}
+          aws-secret-access-key: ${{ env.awsSecretAccessKey }}
+          aws-session-token: ${{ env.awsSessionToken }}
+          aws-region: ${{ env.awsRegion }}
+
+      - name: Terraform Initialize
+        id: init
+        run: cd terraform && terraform init -backend-config="bucket=${{ env.backendS3Bucket }}" -backend-config="key=${{ env.backendS3AccountId }}/${{ env.backendS3StateFile }}" -backend-config="region=${{ env.backendS3Region }}"
+
+      - name: Terraform Apply
+        id: apply
+        run: |
+          cd terraform && terraform apply -var-file=dev.tfvars -auto-approve -no-color

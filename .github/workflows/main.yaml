@@ -2,7 +2,7 @@ name: Provision EC2 server
 
 on:
   push:
-    branches: [ INTERN-679-pipeline ]
+    branches: [ INTERN-679-PIPELINE ]
   pull_request:
     branches: [ main ]
 

@@ -1,4 +1,4 @@
-name: Provision EC2 server
+name: Provision Terraform Resources
 
 on:
   push:

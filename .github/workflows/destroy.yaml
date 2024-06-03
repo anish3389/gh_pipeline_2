@@ -1,4 +1,4 @@
-name: Destroy EC2 server
+name: Destroy Terraform Resources
 
 on:
   workflow_dispatch:

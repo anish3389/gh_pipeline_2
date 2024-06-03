@@ -1,6 +1,7 @@
 ---
 - name: Enable nginx
-  cmd: amazon-linux-extras enable nginx1
+  ansible.builtin.command:
+    cmd: amazon-linux-extras enable nginx1
 
 - name: Install nginx
   ansible.builtin.yum:

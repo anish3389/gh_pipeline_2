@@ -1,8 +1,4 @@
 ---
-apt_packages:
+yum_packages:
   - nginx
-  - awscli
-  - python3-pip
-python_packages: 
-  - boto3
 nginx_conf_file: code.conf

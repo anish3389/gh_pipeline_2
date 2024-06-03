@@ -2,7 +2,7 @@
 - name: Enable nginx
   cmd: amazon-linux-extras enable nginx1
 
-- name: Install aws-cli and nginx
+- name: Install nginx
   ansible.builtin.yum:
     pkg: "{{ yum_packages }}"
     state: present

@@ -1,0 +1,16 @@
+---
+- name: Enable nginx
+  ansible.builtin.command:
+    cmd: amazon-linux-extras enable nginx1
+
+- name: Install nginx
+  ansible.builtin.yum:
+    pkg: "{{ yum_packages }}"
+    state: present
+    update_cache: true
+
+- name: Upload Nginx config file
+  ansible.builtin.template:
+    src: nginx.j2
+    dest: "/etc/nginx/conf.d/{{ nginx_conf_file }}"
+  notify: Restart nginx
